@@ -37,4 +37,4 @@ class QueryInput(BaseModel):
 @app.post("/query")
 async def query(query: QueryInput):
     """POST API to generate SQL from text."""
-    return {"sql_query": generate_sql(query.query)}
+    return {"sql_query": generate_sql(query.body.query)}
