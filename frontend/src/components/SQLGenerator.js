@@ -26,7 +26,8 @@ const SQLAssistant = () => {
   const generateSQL = async () => {
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5001/api/sql/generate', { userQuery: editorQuery });
+      const res = await axios.post('http://localhost:5001/api/sql/generate', {userQuery: userQuery });
+      console.log(res.data.generatedSQL);
       setGeneratedSQL(res.data.generatedSQL);
     } catch (error) {
       console.error(error);
@@ -170,9 +171,9 @@ const SQLAssistant = () => {
             
             <Button className="mt-2" onClick={generateSQL}>Generate Query</Button>
             <div className="mt-3 p-2 bg-white border rounded" style={{ minHeight: '100px' }}>
-              {chatResponse}
+              {generatedSQL}
             </div>
-            <Button variant="outline-primary" className="mt-2" onClick={() => copyToClipboard(chatResponse)}>
+            <Button variant="outline-primary" className="mt-2" onClick={() => copyToClipboard(generatedSQL)}>
               <Copy className="me-2" /> Copy SQL
             </Button>
           </Card>
@@ -216,9 +217,9 @@ const SQLAssistant = () => {
                 </tbody>
               </table>
             )}
-            <Button variant="outline-primary" className="mt-2" onClick={() => copyToClipboard(generatedSQL)}>
+            {/* <Button variant="outline-primary" className="mt-2" onClick={() => copyToClipboard(generatedSQL)}>
               <Copy className="me-2" /> Copy Result
-            </Button>
+            </Button> */}
           </Card>
         </Col>
       </Row>

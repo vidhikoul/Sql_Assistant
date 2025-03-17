@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const axios = require('axios');
 const dotenv = require('dotenv');
 
 // Import the database connection functions from db.js
@@ -57,8 +58,35 @@ app.post('/api/sql/query', async (req, res) => {
 });
 
 // Route to generate SQL queries (example)
-app.post('/api/sql/generate', (req, res) => {
-  res.json({ generatedSQL: 'SELECT * FROM ...' });
+app.post('/api/sql/generate',async (req, res) => {
+  if (!isConnected) {
+    return res.status(400).json({ success: false, message: 'Not connected to any database' });
+  }
+  console.log(req.body.userQuery);
+  if(!req.body.userQuery){
+    return res.status(404).json({success : false, message : "Prompt not found"});
+  }
+  try{
+  // Get all tables in the database
+  const tables = await executeQuery("SHOW TABLES");
+  const tableNames = tables.map((row) => row["Tables_in_defaultdb"]);
+  let createStatements = "tables:\n";
+  for (let table of tableNames) {
+    const [result] = await executeQuery(`SHOW CREATE TABLE \`${table}\``);
+    createStatements += result["Create Table"] + "; ";
+  }
+  const query = createStatements + "\nquery for:" + req.body.userQuery;
+  const generatedSQL = await axios.post("http://20.197.13.106:8000/query", {
+    Headers : {
+      "Content-Type": "application/json"
+    },
+    query:  query.toString()
+  });
+  return res.status(200).json({ generatedSQL:  generatedSQL.data['sql_query']});
+}catch(error){
+  console.log("Query generation error : " + error);
+  return res.status(500).json({success: false, message: error.message })
+}
 });
 
 // Start the server
