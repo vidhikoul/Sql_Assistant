@@ -5,32 +5,27 @@ import torch
 
 app = FastAPI()
 
-# Model and Tokenizer (lazy loading)
-model = None
-tokenizer = None
+# Initialize the tokenizer from Hugging Face Transformers library
+tokenizer = T5Tokenizer.from_pretrained('t5-small')
 
-def load_model():
-    """Load the model and tokenizer only when needed."""
-    global model, tokenizer
-    if model is None:
-        model_name = "gaussalgo/T5-LM-Large-text2sql-spider"
-        tokenizer = T5Tokenizer.from_pretrained(model_name, legacy=False)
-        model = T5ForConditionalGeneration.from_pretrained(model_name)
-        model.eval()  # Set to evaluation mode (faster inference)
+# Load the model
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = T5ForConditionalGeneration.from_pretrained('cssupport/t5-small-awesome-text-to-sql')
+model = model.to(device)
+model.eval()
 
-def generate_sql(query: str) -> str:
-    """Generate SQL query from text input."""
-    load_model()  # Load model on first use
+def generate_sql(input_prompt):
+    # Tokenize the input prompt
+    inputs = tokenizer(input_prompt, padding=True, truncation=True, return_tensors="pt").to(device)
 
-    input_text = "Generate SQL query: " + query
-    inputs = tokenizer(input_text, return_tensors="pt")
-
-    # Use `torch.no_grad()` to reduce memory usage
+    # Forward pass
     with torch.no_grad():
-        output = model.generate(**inputs, max_length=256)
+        outputs = model.generate(**inputs, max_length=512)
 
-    return tokenizer.decode(output[0], skip_special_tokens=True)
+    # Decode the output IDs to a string (SQL query in this case)
+    generated_sql = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
+    return generated_sql
 # Root endpoint
 @app.get("/")
 async def home():
