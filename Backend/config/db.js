@@ -1,21 +1,43 @@
+// db.js
 const mysql = require('mysql2/promise');
-const dotenv = require('dotenv');
+dotenv = require('dotenv');
 
+// Load environment variables
 dotenv.config();
 
-// Function to create a connection dynamically based on user input
-const createConnection = async ({ dbHost, dbUser, dbPassword, dbName }) => {
-  const timeout = 10000;
-  const connection = await mysql.createConnection({
-    host: dbHost,
-    port: 15035, // Default MySQL port; can be customized as needed
-    user: dbUser,
-    password: dbPassword,
-    database: dbName,
-    charset: 'utf8mb4',
-    connectTimeout: timeout,
-  });
-  return connection;
-};
+// Global variable to store DB connection
+let dbConnection = null;
 
-module.exports.createConnection = createConnection;
+// Connect to the database
+async function connectDB({ host, port, user, password, database }) {
+  try {
+    dbConnection = await mysql.createConnection({
+      host,
+      port: port || 15035,  // Default port
+      user,
+      password,
+      database,
+      charset: 'utf8mb4',
+      connectTimeout: 10000,
+      ssl: { rejectUnauthorized: false } // SSL support for cloud databases
+    });
+
+    console.log('Connected to database successfully!');
+    return { success: true, message: 'Connected successfully' };
+  } catch (error) {
+    console.error('Database Connection Error:', error);
+    return { success: false, message: error.message };
+  }
+}
+
+// Execute a query
+async function executeQuery(query) {
+  if (!dbConnection) {
+    throw new Error('Not connected to any database.');
+  }
+  const [rows] = await dbConnection.execute(query);
+  return rows;
+}
+
+// Export the functions for use in other files
+module.exports = { connectDB, executeQuery };

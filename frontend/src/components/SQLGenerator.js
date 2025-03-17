@@ -1,16 +1,16 @@
-import React, { useState, useRef } from 'react';
-import axios from 'axios';
+import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Spinner, Navbar, Modal } from 'react-bootstrap';
 import { Copy, Database } from 'react-bootstrap-icons';
 import Editor from '@monaco-editor/react';
+import axios from 'axios';
 
 const SQLAssistant = () => {
   const [userQuery, setUserQuery] = useState('');
   const [editorQuery, setEditorQuery] = useState('');
   const [chatResponse, setChatResponse] = useState('');
-  const [schema, setSchema] = useState('Enter prompt...');
   const [generatedSQL, setGeneratedSQL] = useState('');
   const [loading, setLoading] = useState(false);
+  const [queryResult, setQueryResult] = useState(null);  // State to store query results
 
   // New state for database connection
   const [showModal, setShowModal] = useState(false);
@@ -39,15 +39,20 @@ const SQLAssistant = () => {
   // Handle connecting to the database
   const handleConnectDatabase = async () => {
     try {
-      console.log('Connecting to database...');
-      const response = await axios.post('http://localhost:5001/api/sql/connect', {
-        dbHost: dbUrl,
-        dbUser,
-        dbPassword,
-        dbName,
+      const response = await fetch('http://localhost:5001/api/sql/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          dbHost: dbUrl,
+          dbUser,
+          dbPassword,
+          dbName,
+        }),
       });
-  
-      if (response.data.success) {
+
+      const result = await response.json();
+
+      if (result.success) {
         setShowModal(false);
         alert('Connected to the database successfully!');
       } else {
@@ -58,21 +63,29 @@ const SQLAssistant = () => {
       alert('Error connecting to the database!');
     }
   };
-  
 
-  // Execute query on the connected database
+  // Execute SQL query in the connected database
   const executeQuery = async () => {
+   console.log("hello ai");
     try {
-      const response = await axios.post('http://localhost:5001/api/sql/execute', {
-        query: generatedSQL,
-        dbHost: dbUrl,
-        dbUser,
-        dbPassword,
-        dbName,
+      const response = await fetch('http://localhost:5001/api/sql/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: generatedSQL,
+          dbHost: dbUrl,
+          dbUser,
+          dbPassword,
+          dbName,
+        }),
       });
 
-      if (response.data.success) {
-        setGeneratedSQL(JSON.stringify(response.data.results, null, 2));
+      const result = await response.json();
+
+
+      if (result.success) {
+        
+        setQueryResult(result.data);  // Store the query result here
       } else {
         alert('Error executing the query.');
       }
@@ -85,12 +98,16 @@ const SQLAssistant = () => {
   // Handle Schema generation request
   const handleGenerateSchema = async () => {
     try {
-      const response = await axios.post('http://localhost:5001/api/sql/schema', {
-        attributes: schemaAttributes.split('\n'),
+      const response = await fetch('http://localhost:5001/api/sql/schema', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ attributes: schemaAttributes.split('\n') }),
       });
 
-      if (response.data.schema) {
-        setGeneratedSchema(response.data.schema);
+      const result = await response.json();
+
+      if (result.schema) {
+        setGeneratedSchema(result.schema);
       } else {
         setGeneratedSchema('Error generating schema.');
       }
@@ -148,8 +165,10 @@ const SQLAssistant = () => {
               rows={3}
               value={userQuery}
               onChange={(e) => setUserQuery(e.target.value)}
+              
               placeholder="Enter Prompt Here..."
             />
+            
             <Button className="mt-2" onClick={executeQuery}>Execute Query</Button>
             <div className="mt-3 p-2 bg-white border rounded" style={{ minHeight: '100px' }}>
               {chatResponse}
@@ -178,7 +197,26 @@ const SQLAssistant = () => {
 
           <Card className="p-3 mt-3 shadow-sm">
             <h5>Result:</h5>
-            <pre className="bg-white p-3 border rounded">{generatedSQL}</pre>
+            {queryResult && (
+              <table className="table table-bordered">
+                <thead>
+                  <tr>
+                    {Object.keys(queryResult[0]).map((key) => (
+                      <th key={key}>{key}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {queryResult.map((row, index) => (
+                    <tr key={index}>
+                      {Object.values(row).map((value, idx) => (
+                        <td key={idx}>{value}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
             <Button variant="outline-primary" className="mt-2" onClick={() => copyToClipboard(generatedSQL)}>
               <Copy className="me-2" /> Copy Result
             </Button>
