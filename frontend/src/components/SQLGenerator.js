@@ -66,13 +66,12 @@ const SQLAssistant = () => {
 
   // Execute SQL query in the connected database
   const executeQuery = async () => {
-   console.log("hello ai");
     try {
       const response = await fetch('http://localhost:5001/api/sql/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          query: generatedSQL,
+          query: editorQuery,
           dbHost: dbUrl,
           dbUser,
           dbPassword,
@@ -169,7 +168,7 @@ const SQLAssistant = () => {
               placeholder="Enter Prompt Here..."
             />
             
-            <Button className="mt-2" onClick={executeQuery}>Execute Query</Button>
+            <Button className="mt-2" onClick={generateSQL}>Generate Query</Button>
             <div className="mt-3 p-2 bg-white border rounded" style={{ minHeight: '100px' }}>
               {chatResponse}
             </div>
@@ -190,7 +189,7 @@ const SQLAssistant = () => {
               onChange={(value) => setEditorQuery(value)}
               defaultValue="-- Write your SQL query here"
             />
-            <Button className="mt-5 w-100" onClick={generateSQL} disabled={loading}>
+            <Button className="mt-5 w-100" onClick={executeQuery} disabled={loading}>
               {loading ? <Spinner animation="border" size="sm" className="me-2" /> : 'Execute Query'}
             </Button>
           </Card>
