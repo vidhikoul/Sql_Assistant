@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/vidhikoul/Sql_Assistant#readme",
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
     "axios": "^1.7.9",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
