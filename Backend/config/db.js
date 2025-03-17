@@ -1,20 +1,21 @@
-const mysql = require("mysql2");
-const dotenv = require("dotenv");
+const mysql = require('mysql2/promise');
+const dotenv = require('dotenv');
 
 dotenv.config();
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0,
-  ssl: { rejectUnauthorized: true ,
-  ca:process.env.CA_CERTIFICATE
-  }
-});
+// Function to create a connection dynamically based on user input
+const createConnection = async ({ dbHost, dbUser, dbPassword, dbName }) => {
+  const timeout = 10000;
+  const connection = await mysql.createConnection({
+    host: dbHost,
+    port: 15035, // Default MySQL port; can be customized as needed
+    user: dbUser,
+    password: dbPassword,
+    database: dbName,
+    charset: 'utf8mb4',
+    connectTimeout: timeout,
+  });
+  return connection;
+};
 
-module.exports = pool.promise();
+module.exports.createConnection = createConnection;

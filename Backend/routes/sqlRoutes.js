@@ -1,50 +1,38 @@
-const express = require("express");
+const express = require('express');
 const router = express.Router();
+const db = require('../config/db.js'); // Import the connection function
 
-// Existing route for SQL query generation
-router.post("/generate", (req, res) => {
-  // Your existing SQL generation logic here...
-  res.json({ generatedSQL: "SELECT * FROM ..." });
-});
+// New route to handle connecting to the database
+router.post('/connect', async (req, res) => {
+  const { dbHost, dbUser, dbPassword, dbName } = req.body;
 
-// New route for schema suggestions
-router.post("/schema", (req, res) => {
-  const { attributes, dependencies } = req.body;
-
-  // Generate a schema suggestion using the attributes with datatypes and dependencies
-  const schemaSuggestion = generateSchema(attributes, dependencies);
-
-  res.json({ schema: schemaSuggestion });
-});
-
-/**
- * Generate a suggested schema.
- * @param {Array} attributes - Array of attribute strings in format "name:datatype"
- * @param {Array} dependencies - Array of dependency strings, e.g., "id->name"
- */
-function generateSchema(attributes, dependencies) {
-  // Parse each attribute into "name DATATYPE" format
-  const parsedAttributes = attributes.map(attr => {
-    const [name, type] = attr.split(":").map(part => part.trim());
-    // Optionally, you can add logic to convert shorthand datatypes to full SQL datatypes
-    return `${name.toUpperCase()} ${type.toUpperCase()}`;
-  });
-
-  // Construct the CREATE TABLE statement suggestion
-  const schemaLines = [];
-  schemaLines.push("CREATE TABLE Suggested_Table (");
-  schemaLines.push("  " + parsedAttributes.join(",\n  "));
-  schemaLines.push(");");
-
-  // Append dependencies as comments if provided
-  if (dependencies.length > 0) {
-    schemaLines.push("\n-- Dependencies:");
-    dependencies.forEach(dep => {
-      schemaLines.push(`-- ${dep}`);
-    });
+  try {
+    const connection = await db.createConnection({ dbHost, dbUser, dbPassword, dbName });
+    await connection.query('SELECT 1'); // Check if the connection is successful
+    res.json({ success: true, message: 'Successfully connected to the database!' });
+  } catch (error) {
+    console.error('Database connection error:', error);
+    res.json({ success: false, message: 'Failed to connect to the database' });
   }
+});
 
-  return schemaLines.join("\n");
-}
+// Route to execute a SQL query
+router.post('/execute', async (req, res) => {
+  const { query, dbHost, dbUser, dbPassword, dbName } = req.body;
+
+  try {
+    const connection = await db.createConnection({ dbHost, dbUser, dbPassword, dbName });
+    const [rows] = await connection.execute(query); // Execute the dynamic query
+    res.json({ success: true, results: rows });
+  } catch (error) {
+    console.error('Error executing query:', error);
+    res.json({ success: false, message: 'Error executing query' });
+  }
+});
+
+// Existing route for SQL query generation (unchanged)
+router.post('/generate', (req, res) => {
+  res.json({ generatedSQL: 'SELECT * FROM ...' });
+});
 
 module.exports = router;
