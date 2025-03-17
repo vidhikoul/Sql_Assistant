@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Container, Row, Col, Card, Form, Button, Spinner, Navbar, Modal } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Form, Button, Spinner, Navbar, Modal, Toast } from 'react-bootstrap';
 import { Copy, Database } from 'react-bootstrap-icons';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
@@ -12,16 +12,44 @@ const SQLAssistant = () => {
   const [loading, setLoading] = useState(false);
   const [queryResult, setQueryResult] = useState(null);  // State to store query results
 
-  // New state for database connection
   const [showModal, setShowModal] = useState(false);
   const [dbUrl, setDbUrl] = useState('');
   const [dbUser, setDbUser] = useState('');
   const [dbPassword, setDbPassword] = useState('');
   const [dbName, setDbName] = useState('');
+  const [dbConnectionError, setDbConnectionError] = useState(null); // New state for connection errors
 
-  // New state for schema generation
   const [schemaAttributes, setSchemaAttributes] = useState('');
   const [generatedSchema, setGeneratedSchema] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
+  const [showToast, setShowToast] = useState(false);
+
+  const [connectionStatus, setConnectionStatus] = useState('');  // New state for connection status
+
+  useEffect(() => {
+    if (window.monaco) {
+      window.monaco.languages.registerCompletionItemProvider('sql', {
+        provideCompletionItems: (model, position) => {
+          const word = model.getWordAtPosition(position);
+          const suggestions = [
+            'SELECT', 'WHERE', 'UPDATE', 'INSERT', 'DELETE', 'FROM', 'JOIN', 'INNER', 'LEFT', 'RIGHT', 'ORDER BY', 'GROUP BY', 'LIMIT',
+            'HAVING', 'LIKE', 'IN', 'AND', 'OR', 'NOT', 'AS', 'IS', 'BETWEEN', 'DISTINCT', 'NULL'
+          ].map(keyword => ({
+            label: keyword,
+            kind: window.monaco.languages.CompletionItemKind.Keyword,
+            insertText: keyword,
+            range: {
+              startLineNumber: position.lineNumber,
+              startColumn: position.column - (word ? word.word.length : 0),
+              endLineNumber: position.lineNumber,
+              endColumn: position.column,
+            }
+          }));
+          return { suggestions };
+        },
+      });
+    }
+  }, []);
 
   const generateSQL = async () => {
     setLoading(true);
@@ -29,16 +57,24 @@ const SQLAssistant = () => {
       const res = await axios.post('http://localhost:5001/api/sql/generate', {userQuery: userQuery });
       console.log(res.data.generatedSQL);
       setGeneratedSQL(res.data.generatedSQL);
+      setToastMessage('SQL generated successfully!');
+      setShowToast(true);
     } catch (error) {
       console.error(error);
       setGeneratedSQL('Error generating SQL. Please try again.');
+      setToastMessage('Error generating SQL!');
+      setShowToast(true);
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle connecting to the database
   const handleConnectDatabase = async () => {
+    if (!dbUrl || !dbUser || !dbPassword || !dbName) {
+      setDbConnectionError('Please fill all fields to connect.');
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:5001/api/sql/connect', {
         method: 'POST',
@@ -55,18 +91,22 @@ const SQLAssistant = () => {
 
       if (result.success) {
         setShowModal(false);
-        alert('Connected to the database successfully!');
+        setToastMessage('Connected to the database successfully!');
+        setShowToast(true);
+        setConnectionStatus(dbName); // Set the button text to database name
       } else {
-        alert('Failed to connect to the database!');
+        setDbConnectionError('Failed to connect to the database!');
+        setConnectionStatus('Connect to Database'); // Reset the button text
       }
     } catch (error) {
       console.error('Error connecting to the database:', error);
-      alert('Error connecting to the database!');
+      setDbConnectionError('Error connecting to the database!');
+      setConnectionStatus('Connect to Database'); // Reset the button text
     }
   };
 
-  // Execute SQL query in the connected database
   const executeQuery = async () => {
+    setLoading(true);
     try {
       const response = await fetch('http://localhost:5001/api/sql/query', {
         method: 'POST',
@@ -82,20 +122,23 @@ const SQLAssistant = () => {
 
       const result = await response.json();
 
-
       if (result.success) {
-        
-        setQueryResult(result.data);  // Store the query result here
+        setQueryResult(result.data);
+        setToastMessage('Query executed successfully!');
+        setShowToast(true);
       } else {
-        alert('Error executing the query.');
+        setToastMessage('Error executing the query!');
+        setShowToast(true);
       }
     } catch (error) {
       console.error(error);
-      alert('Error executing the query.');
+      setToastMessage('Error executing the query!');
+      setShowToast(true);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle Schema generation request
   const handleGenerateSchema = async () => {
     try {
       const response = await fetch('http://localhost:5001/api/sql/schema', {
@@ -108,16 +151,21 @@ const SQLAssistant = () => {
 
       if (result.schema) {
         setGeneratedSchema(result.schema);
+        setToastMessage('Schema generated successfully!');
+        setShowToast(true);
       } else {
         setGeneratedSchema('Error generating schema.');
+        setToastMessage('Error generating schema!');
+        setShowToast(true);
       }
     } catch (error) {
       console.error(error);
       setGeneratedSchema('Error generating schema.');
+      setToastMessage('Error generating schema!');
+      setShowToast(true);
     }
   };
 
-  // Copy the content of either generatedSQL or chatResponse to the clipboard
   const copyToClipboard = (content) => {
     const textArea = document.createElement('textarea');
     textArea.value = content; // Set the value to the content (generatedSQL or chatResponse)
@@ -125,23 +173,26 @@ const SQLAssistant = () => {
     textArea.select();
     document.execCommand('copy');
     document.body.removeChild(textArea);
-    console.log('Content copied to clipboard!');
+    setToastMessage('Content copied to clipboard!');
+    setShowToast(true);
   };
 
   return (
     <Container fluid className="vh-100 p-4 bg-light">
-      {/* Navbar with Project Title and Database Connection Button */}
       <Navbar bg="dark" variant="dark" className="mb-4 p-3">
         <Container className="d-flex justify-content-between align-items-center">
           <Navbar.Brand className="fs-3 fw-bold">SQL Assistant</Navbar.Brand>
-          <Button variant="success" onClick={() => setShowModal(true)}>
-            <Database className="me-2" /> Connect to Database
+          <Button
+            variant={connectionStatus === dbName ? 'primary' : 'success'}  // Change button color to blue if connected
+            onClick={() => setShowModal(true)}
+          >
+            <Database className="me-2" />
+            {connectionStatus || 'Connect to Database'}
           </Button>
         </Container>
       </Navbar>
 
       <Row className="h-100">
-        {/* Left Panel: Chatbot & Schema Section */}
         <Col md={4} className="d-flex flex-column">
           <Card className="p-3 shadow-sm mb-3">
             <h5>Get Schema Recommendation</h5>
@@ -165,7 +216,6 @@ const SQLAssistant = () => {
               rows={3}
               value={userQuery}
               onChange={(e) => setUserQuery(e.target.value)}
-              
               placeholder="Enter Prompt Here..."
             />
             
@@ -179,7 +229,6 @@ const SQLAssistant = () => {
           </Card>
         </Col>
 
-        {/* Right Panel: SQL Editor & Connectivity */}
         <Col md={8} className="d-flex flex-column">
           <Card className="p-3 shadow-sm flex-grow-1">
             <h5>SQL Editor</h5>
@@ -267,6 +316,7 @@ const SQLAssistant = () => {
                 placeholder="Enter database name"
               />
             </Form.Group>
+            {dbConnectionError && <div className="text-danger">{dbConnectionError}</div>}
           </Form>
         </Modal.Body>
         <Modal.Footer>
@@ -278,6 +328,11 @@ const SQLAssistant = () => {
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* Toast Notifications */}
+      <Toast show={showToast} onClose={() => setShowToast(false)} autohide delay={3000}>
+        <Toast.Body>{toastMessage}</Toast.Body>
+      </Toast>
     </Container>
   );
 };
