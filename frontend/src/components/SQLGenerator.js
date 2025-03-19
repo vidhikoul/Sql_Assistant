@@ -246,7 +246,8 @@ const SQLAssistant = () => {
 
           <Card className="p-3 mt-3 shadow-sm">
             <h5>Result:</h5>
-            {queryResult && (
+            {
+            ( queryResult == null)? <h3>No data found</h3>: (queryResult[0] === undefined) ? <h3>No data found</h3>:queryResult && (
               <table className="table table-bordered">
                 <thead>
                   <tr>
@@ -260,7 +261,8 @@ const SQLAssistant = () => {
                     <tr key={index}>
                       {Object.values(row).map((value, idx) => (
                         <td key={idx}>{value}</td>
-                      ))}
+                      )
+                      )}
                     </tr>
                   ))}
                 </tbody>
