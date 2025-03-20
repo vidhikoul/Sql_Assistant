@@ -12,7 +12,7 @@ tokenizer = T5Tokenizer.from_pretrained('t5-small')
 
 # Load the model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = T5ForConditionalGeneration.from_pretrained('cssupport/t5-small-awesome-text-to-sql')
+model = T5ForConditionalGeneration.from_pretrained('./models')
 model = model.to(device)
 model.eval()
 
