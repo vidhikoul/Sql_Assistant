@@ -1,16 +1,23 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from transformers import pipeline
-
+import requests
 app = FastAPI()
 
-model_name = "codellama/CodeLlama-7b-Instruct-hf"  # Update this if using a local model
-llm_pipeline = pipeline("text-generation", model=model_name)
+# Ollama API details
+OLLAMA_URL = "http://localhost:11434/api/generate"  # Default Ollama endpoint
+MODEL_NAME = "codellama"  # Ensure this matches your locally installed model
 
 def generate_query(prompt):
-    output = llm_pipeline(prompt, max_length=512, truncation=True)[0]["generated_text"]
-    return output
-
+    response = requests.post(OLLAMA_URL, json={
+        "model": MODEL_NAME,
+        "prompt": prompt,
+        "stream": False  # Set to True if you want streaming responses
+    })
+    if response.status_code == 200:
+        sql_query = response.json().get("response", "No output generated.")
+        return sql_query
+    return "Error"
 
 # Root endpoint
 @app.get("/")
