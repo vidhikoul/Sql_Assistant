@@ -38,6 +38,22 @@ app.post('/api/sql/connect', async (req, res) => {
   res.status(result.success ? 200 : 500).json(result);
 });
 
+app.post('/api/sql/schema', async (req, res)=>{
+  const {userQuery} = req.body;
+  if(!userQuery){
+    return  res.status(404).json({error : "No prompt found"});
+  }
+  const result = await axios.post("http://20.197.51.242:8000/query", {
+    Headers : {
+      "Content-Type": "application/json"
+    },
+    query:  `Generate only sql schema and give me Create Table sql statements only for this prompt : ${userQuery}`
+  });
+  console.log(result);
+  return res.status(200).json({ schema:  result.data['sql_query']});
+
+})
+
 // API to execute SQL query
 app.post('/api/sql/query', async (req, res) => {
   if (!isConnected) {
@@ -70,13 +86,14 @@ app.post('/api/sql/generate',async (req, res) => {
   // Get all tables in the database
   const tables = await executeQuery("SHOW TABLES");
   const tableNames = tables.map((row) => row["Tables_in_defaultdb"]);
-  let createStatements = "tables:\n";
+  let createStatements = "";
   for (let table of tableNames) {
     const [result] = await executeQuery(`SHOW CREATE TABLE \`${table}\``);
     createStatements += result["Create Table"] + "; ";
   }
-  const query = createStatements + "\nquery for:" + req.body.userQuery;
-  const generatedSQL = await axios.post("http://20.197.13.106:8000/query", {
+  // const query = createStatements + "\nquery for:" + req.body.userQuery;
+  const query = `Give me only sql query in trino dialect without any explaination for text : ${req.body.userQuery} Consider this schema : ${createStatements}`;
+  const generatedSQL = await axios.post("http://20.197.51.242:8000/query", {
     Headers : {
       "Content-Type": "application/json"
     },

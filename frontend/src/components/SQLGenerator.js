@@ -19,7 +19,7 @@ const SQLAssistant = () => {
   const [dbName, setDbName] = useState('');
   const [dbConnectionError, setDbConnectionError] = useState(null); // New state for connection errors
 
-  const [schemaAttributes, setSchemaAttributes] = useState('');
+  const [schemaPrompt, setSchemaAttributes] = useState('');
   const [generatedSchema, setGeneratedSchema] = useState('');
   const [toastMessage, setToastMessage] = useState('');
   const [showToast, setShowToast] = useState(false);
@@ -54,8 +54,7 @@ const SQLAssistant = () => {
   const generateSQL = async () => {
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5001/api/sql/generate', {userQuery: userQuery });
-      console.log(res.data.generatedSQL);
+      const res = await axios.post('http://localhost:5001/api/sql/generate', {userQuery: userQuery});
       setGeneratedSQL(res.data.generatedSQL);
       setToastMessage('SQL generated successfully!');
       setShowToast(true);
@@ -144,7 +143,7 @@ const SQLAssistant = () => {
       const response = await fetch('http://localhost:5001/api/sql/schema', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ attributes: schemaAttributes.split('\n') }),
+        body: JSON.stringify({ userQuery: schemaPrompt }),
       });
 
       const result = await response.json();
@@ -196,10 +195,11 @@ const SQLAssistant = () => {
         <Col md={4} className="d-flex flex-column">
           <Card className="p-3 shadow-sm mb-3">
             <h5>Get Schema Recommendation</h5>
+            
             <Form.Control
               as="textarea"
               rows={5}
-              value={schemaAttributes}
+              value={schemaPrompt}
               onChange={(e) => setSchemaAttributes(e.target.value)}
               placeholder="Enter your Prompt..."
             />
