@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Container, Card, Form, Button, Toast } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import SchemaDisplay from "./SchemaDisplay";
+import { parseSQLSchema } from "./parseSQLSchema.js";
 
 const SchemaGenerator = () => {
   const [schemaPrompt, setSchemaPrompt] = useState("");
@@ -38,6 +40,7 @@ const SchemaGenerator = () => {
 
   return (
     <Container className="vh-100 p-4 bg-light">
+      <div style={{ display: "flex", gap: "10px" }}>
       <Card className="p-5 shadow-sm">
         <h5>Get Schema Recommendation</h5>
         <Form.Control
@@ -54,7 +57,11 @@ const SchemaGenerator = () => {
           {generatedSchema}
         </div>
       </Card>
+      <card className="mt-3 p-2 bg-white border rounded" style={{ minHeight: "100px"}}>
+      <SchemaDisplay schema={parseSQLSchema(generatedSchema)} />
+      </card>
 
+      </div>
       <div className="mt-4 d-flex justify-content-between">
         <Button variant="secondary" onClick={() => navigate("/")}>
           Back to SQL Assistant

@@ -51,7 +51,6 @@ app.post('/api/sql/schema', async (req, res)=>{
   });
   console.log(result);
   return res.status(200).json({ schema:  result.data['sql_query']});
-
 })
 
 // API to execute SQL query
