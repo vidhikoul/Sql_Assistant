@@ -3,8 +3,11 @@ import { Container, Row, Col, Card, Form, Button, Spinner, Navbar, Modal, Toast 
 import { Copy, Database } from 'react-bootstrap-icons';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const SQLAssistant = () => {
+  const navigate = useNavigate();
+  
   const [userQuery, setUserQuery] = useState('');
   const [editorQuery, setEditorQuery] = useState('');
   const [chatResponse, setChatResponse] = useState('');
@@ -181,33 +184,27 @@ const SQLAssistant = () => {
       <Navbar bg="dark" variant="dark" className="mb-4 p-3">
         <Container className="d-flex justify-content-between align-items-center">
           <Navbar.Brand className="fs-3 fw-bold">SQL Assistant</Navbar.Brand>
-          <Button
-            variant={connectionStatus === dbName ? 'primary' : 'success'}  // Change button color to blue if connected
-            onClick={() => setShowModal(true)}
-          >
-            <Database className="me-2" />
-            {connectionStatus || 'Connect to Database'}
-          </Button>
+          <div className="d-flex ms-auto gap-2"> {/* Align buttons to the right */}
+      <Button
+        className="gap-0"
+        onClick={() => navigate('/SchemaGenerator')} // Redirect on click
+      >
+        Get Schema Recommendation
+      </Button>
+      <Button
+        variant={connectionStatus === dbName ? 'primary' : 'success'}
+        onClick={() => setShowModal(true)}
+      >
+        <Database className="me-2" />
+        {connectionStatus || 'Connect to Database'}
+      </Button>
+    </div>
         </Container>
       </Navbar>
 
       <Row className="h-100">
         <Col md={4} className="d-flex flex-column">
-          <Card className="p-3 shadow-sm mb-3">
-            <h5>Get Schema Recommendation</h5>
-            
-            <Form.Control
-              as="textarea"
-              rows={5}
-              value={schemaPrompt}
-              onChange={(e) => setSchemaAttributes(e.target.value)}
-              placeholder="Enter your Prompt..."
-            />
-            <Button className="mt-2" onClick={handleGenerateSchema}>Create Schema</Button>
-            <div className="mt-3 p-2 bg-white border rounded" style={{ minHeight: '100px' }}>
-              {generatedSchema}
-            </div>
-          </Card>
+          
 
           <Card className="p-3 shadow-sm flex-grow-1">
             <h5>Get SQL Query</h5>
@@ -295,7 +292,6 @@ const SQLAssistant = () => {
               <Form.Label>Database User</Form.Label>
               <Form.Control
                 type="text"
-                value={dbUser}
                 onChange={(e) => setDbUser(e.target.value)}
                 placeholder="Enter database user"
               />
