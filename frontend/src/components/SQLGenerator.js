@@ -141,33 +141,6 @@ const SQLAssistant = () => {
     }
   };
 
-  const handleGenerateSchema = async () => {
-    try {
-      const response = await fetch('http://localhost:5001/api/sql/schema', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userQuery: schemaPrompt }),
-      });
-
-      const result = await response.json();
-
-      if (result.schema) {
-        setGeneratedSchema(result.schema);
-        setToastMessage('Schema generated successfully!');
-        setShowToast(true);
-      } else {
-        setGeneratedSchema('Error generating schema.');
-        setToastMessage('Error generating schema!');
-        setShowToast(true);
-      }
-    } catch (error) {
-      console.error(error);
-      setGeneratedSchema('Error generating schema.');
-      setToastMessage('Error generating schema!');
-      setShowToast(true);
-    }
-  };
-
   const copyToClipboard = (content) => {
     const textArea = document.createElement('textarea');
     textArea.value = content; // Set the value to the content (generatedSQL or chatResponse)
@@ -188,12 +161,14 @@ const SQLAssistant = () => {
       <Button
         className="gap-0"
         onClick={() => navigate('/SchemaGenerator')} // Redirect on click
+        disabled = {loading}
       >
         Get Schema Recommendation
       </Button>
       <Button
         variant={connectionStatus === dbName ? 'primary' : 'success'}
         onClick={() => setShowModal(true)}
+        disabled = {loading}
       >
         <Database className="me-2" />
         {connectionStatus || 'Connect to Database'}
@@ -216,7 +191,7 @@ const SQLAssistant = () => {
               placeholder="Enter Prompt Here..."
             />
             
-            <Button className="mt-2" onClick={generateSQL}>Generate Query</Button>
+            <Button className="mt-2" onClick={generateSQL} disabled = {loading}>{loading ? <Spinner animation="border" size="sm" className="me-2" /> : 'Generate Query'}</Button>
             <div className="mt-3 p-2 bg-white border rounded" style={{ minHeight: '100px' }}>
               {generatedSQL}
             </div>

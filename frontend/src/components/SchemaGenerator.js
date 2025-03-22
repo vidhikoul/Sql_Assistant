@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Container, Card, Form, Button, Toast } from "react-bootstrap";
+import { Container, Card, Form, Button, Toast, Spinner} from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import SchemaDisplay from "./SchemaDisplay";
 import { parseSQLSchema } from "./parseSQLSchema.js";
@@ -9,10 +9,12 @@ const SchemaGenerator = () => {
   const [generatedSchema, setGeneratedSchema] = useState("");
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const navigate = useNavigate();
 
   const handleGenerateSchema = async () => {
+    setLoading(true);
     try {
       const response = await fetch("http://localhost:5001/api/sql/schema", {
         method: "POST",
@@ -30,12 +32,14 @@ const SchemaGenerator = () => {
         setToastMessage("Error generating schema!");
       }
       setShowToast(true);
+      
     } catch (error) {
       console.error(error);
       setGeneratedSchema("Error generating schema.");
       setToastMessage("Error generating schema!");
       setShowToast(true);
     }
+    setLoading(false);
   };
 
   return (
@@ -50,8 +54,8 @@ const SchemaGenerator = () => {
           onChange={(e) => setSchemaPrompt(e.target.value)}
           placeholder="Enter your Prompt..."
         />
-        <Button className="mt-2" onClick={handleGenerateSchema}>
-          Create Schema
+        <Button className="mt-2" onClick={handleGenerateSchema} disabled= {loading}>
+        {loading ? <Spinner animation="border" size="sm" className="me-2" /> : 'Generate Schema'}
         </Button>
         <div className="mt-3 p-2 bg-white border rounded" style={{ minHeight: "100px" }}>
           {generatedSchema}
