@@ -91,7 +91,7 @@ app.post('/api/sql/generate',async (req, res) => {
     createStatements += result["Create Table"] + "; ";
   }
   // const query = createStatements + "\nquery for:" + req.body.userQuery;
-  const query = `Give me only sql query in trino dialect without any explaination for text : ${req.body.userQuery} Consider this schema : ${createStatements}`;
+  const query = `Give me only sql query in trino dialect without any explaination only sql query for text : ${req.body.userQuery} Consider this schema : ${createStatements}`;
   const generatedSQL = await axios.post("http://74.225.201.145:8000/query", {
     Headers : {
       "Content-Type": "application/json"
