@@ -16,7 +16,7 @@ const SchemaGenerator = () => {
   const handleGenerateSchema = async () => {
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:5001/api/sql/schema", {
+      const response = await fetch("https://sql-assistant-backend.onrender.com/api/sql/schema", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userQuery: schemaPrompt }),

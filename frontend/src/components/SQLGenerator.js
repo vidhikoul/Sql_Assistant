@@ -57,7 +57,7 @@ const SQLAssistant = () => {
   const generateSQL = async () => {
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5001/api/sql/generate', {userQuery: userQuery});
+      const res = await axios.post('https://sql-assistant-backend.onrender.com/api/sql/generate', {userQuery: userQuery});
       setGeneratedSQL(res.data.generatedSQL);
       setToastMessage('SQL generated successfully!');
       setShowToast(true);
@@ -78,7 +78,7 @@ const SQLAssistant = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5001/api/sql/connect', {
+      const response = await fetch('https://sql-assistant-backend.onrender.com/api/sql/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -110,7 +110,7 @@ const SQLAssistant = () => {
   const executeQuery = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:5001/api/sql/query', {
+      const response = await fetch('https://sql-assistant-backend.onrender.com/api/sql/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
