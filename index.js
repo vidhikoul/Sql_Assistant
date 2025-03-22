@@ -43,6 +43,7 @@ app.post('/api/sql/schema', async (req, res)=>{
   if(!userQuery){
     return  res.status(404).json({error : "No prompt found"});
   }
+  try{
   const result = await axios.post("http://74.225.201.145:8000/query", {
     Headers : {
       "Content-Type": "application/json"
@@ -51,6 +52,11 @@ app.post('/api/sql/schema', async (req, res)=>{
   });
   console.log(result);
   return res.status(200).json({ schema:  result.data['sql_query']});
+}
+catch(error){
+  console.log("Schema recommendation error : " + error);
+  return res.status(500).json({schema : "Internal server error"});
+}
 })
 
 // API to execute SQL query
