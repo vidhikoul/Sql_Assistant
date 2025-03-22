@@ -40,9 +40,9 @@ npm start
 Ensure your MySQL database is running and update the configuration in the backend.
 5. Run the Application
 Once both frontend and backend servers are running, open your browser and go to:
-http://localhost:3000  
-Demo Videos
+http://localhost:3000
 
+## Demo Videos
 ## Connection with database
 https://github.com/user-attachments/assets/f1f75a70-cac1-4b3d-a552-abf7008306bd
 
