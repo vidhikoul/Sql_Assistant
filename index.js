@@ -2,7 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const dotenv = require('dotenv');
-
+const { Groq } = require('groq-sdk');
+const groq = new Groq({ apiKey: "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" });
 // Import the database connection functions from db.js
 const { connectDB, executeQuery } = require('./config/db.js');
 
@@ -38,26 +39,35 @@ app.post('/api/sql/connect', async (req, res) => {
   res.status(result.success ? 200 : 500).json(result);
 });
 
-app.post('/api/sql/schema', async (req, res)=>{
-  const {userQuery} = req.body;
-  if(!userQuery){
-    return  res.status(404).json({error : "No prompt found"});
+app.get('/api/sql/schema', async (req, res) => {
+  const { userQuery } = req.query; // Change from req.body to req.query
+
+  if (!userQuery) {
+    return res.status(400).json({ error: "No prompt found" });
   }
-  try{
-  const result = await axios.post("http://74.225.201.145:8000/query", {
-    Headers : {
-      "Content-Type": "application/json"
-    },
-    query:  `Generate only sql schema and give me Create Table sql statements only for this prompt : ${userQuery}`
-  });
-  console.log(result);
-  return res.status(200).json({ schema:  result.data['sql_query']});
-}
-catch(error){
-  console.log("Schema recommendation error : " + error);
-  return res.status(500).json({schema : "Internal server error"});
-}
-})
+
+  try {
+    const result = await groq.chat.completions.create({
+      messages: [{ "role": "user", "content": `Generate only SQL schema and give me CREATE TABLE SQL statements only for this prompt: ${userQuery}` }],
+      model: "llama-3.3-70b-versatile",
+      temperature: 1,
+      max_completion_tokens: 1024,
+      top_p: 1,
+      stream: false
+    });
+
+    if (!result.choices || result.choices.length === 0) {
+      throw new Error("No schema response from LLM");
+    }
+
+    const generatedQuery = result.choices[0]?.message?.content?.trim() || '';
+    console.log("Generated Query:", generatedQuery);
+    return res.status(200).json({ schema: generatedQuery });
+  } catch (error) {
+    console.error("Schema recommendation error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
 
 // API to execute SQL query
 app.post('/api/sql/query', async (req, res) => {
@@ -79,36 +89,33 @@ app.post('/api/sql/query', async (req, res) => {
 });
 
 // Route to generate SQL queries (example)
-app.post('/api/sql/generate',async (req, res) => {
-  if (!isConnected) {
-    return res.status(400).json({ success: false, message: 'Not connected to any database' });
+app.get('/api/sql/generate', async (req, res) => {
+  const { userQuery } = req.query;
+  if (!userQuery) {
+    return res.status(400).json({ error: 'No prompt found' });
   }
-  console.log(req.body.userQuery);
-  if(!req.body.userQuery){
-    return res.status(404).json({success : false, message : "Prompt not found"});
+
+  try {
+    const chatCompletion = await groq.chat.completions.create({
+      messages: [{ "role": "user", "content": `Give me only SQL query in Trino dialect without any explanation for text: ${userQuery}` }],
+      model: "llama-3.3-70b-versatile",
+      temperature: 1,
+      max_completion_tokens: 1024,
+      top_p: 1,
+      stream: false
+    });
+
+    if (!chatCompletion.choices || chatCompletion.choices.length === 0) {
+      throw new Error("No response from LLM");
+    }
+
+    const generatedQuery = chatCompletion.choices[0]?.message?.content?.trim() || '';
+    console.log("Generated Query:", generatedQuery);
+    res.status(200).json({ sql_query: generatedQuery });
+  } catch (error) {
+    console.error("SQL generation error:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
-  try{
-  // Get all tables in the database
-  const tables = await executeQuery("SHOW TABLES");
-  const tableNames = tables.map((row) => row["Tables_in_defaultdb"]);
-  let createStatements = "";
-  for (let table of tableNames) {
-    const [result] = await executeQuery(`SHOW CREATE TABLE \`${table}\``);
-    createStatements += result["Create Table"] + "; ";
-  }
-  // const query = createStatements + "\nquery for:" + req.body.userQuery;
-  const query = `Give me only sql query in trino dialect without any explaination only sql query for text : ${req.body.userQuery} Consider this schema : ${createStatements}`;
-  const generatedSQL = await axios.post("http://74.225.201.145:8000/query", {
-    Headers : {
-      "Content-Type": "application/json"
-    },
-    query:  query.toString()
-  });
-  return res.status(200).json({ generatedSQL:  generatedSQL.data['sql_query']});
-}catch(error){
-  console.log("Query generation error : " + error);
-  return res.status(500).json({success: false, message: error.message })
-}
 });
 
 // Start the server
