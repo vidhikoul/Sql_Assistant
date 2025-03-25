@@ -4,8 +4,17 @@ import { Copy, Database } from 'react-bootstrap-icons';
 import Editor from '@monaco-editor/react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import ThemeToggle from './ThemeToggle';
 const SQLAssistant = () => {
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-bs-theme", theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === "light" ? "dark" : "light"));
+  };
   const navigate = useNavigate();
   
   const [userQuery, setUserQuery] = useState('');
@@ -54,6 +63,9 @@ const SQLAssistant = () => {
     }
   }, []);
 
+
+
+
   const generateSQL = async () => {
     setLoading(true);
     try {
@@ -69,7 +81,7 @@ const SQLAssistant = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const handleConnectDatabase = async () => {
     if (!dbUrl || !dbUser || !dbPassword || !dbName) {
@@ -178,27 +190,28 @@ const SQLAssistant = () => {
     setToastMessage('Content copied to clipboard!');
     setShowToast(true);
   };
+  
 
   return (
     <Container fluid className="vh-100 p-4 bg-light">
-      <Navbar bg="dark" variant="dark" className="mb-4 p-3">
+       <Navbar bg="dark" variant="dark" className="mb-4 p-3">
         <Container className="d-flex justify-content-between align-items-center">
           <Navbar.Brand className="fs-3 fw-bold">SQL Assistant</Navbar.Brand>
-          <div className="d-flex ms-auto gap-2"> {/* Align buttons to the right */}
-      <Button
-        className="gap-0"
-        onClick={() => navigate('/SchemaGenerator')} // Redirect on click
-      >
-        Get Schema Recommendation
-      </Button>
-      <Button
-        variant={connectionStatus === dbName ? 'primary' : 'success'}
-        onClick={() => setShowModal(true)}
-      >
-        <Database className="me-2" />
-        {connectionStatus || 'Connect to Database'}
-      </Button>
-    </div>
+          <div className="d-flex ms-auto gap-2">
+            <Button onClick={() => navigate('/SchemaGenerator')}>
+              Get Schema Recommendation
+            </Button>
+            <Button
+              variant={connectionStatus === dbName ? 'primary' : 'success'}
+              onClick={() => setShowModal(true)}
+            >
+              <Database className="me-2" />
+              {connectionStatus || 'Connect to Database'}
+            </Button>
+            {/* <button className="btn btn-primary" onClick={toggleTheme}>
+              Toggle {theme === "light" ? "Dark" : "Light"} Mode
+            </button> */}
+          </div>
         </Container>
       </Navbar>
 
@@ -230,12 +243,13 @@ const SQLAssistant = () => {
           <Card className="p-3 shadow-sm flex-grow-1">
             <h5>SQL Editor</h5>
             <Editor
-              height="450px"
-              defaultLanguage="sql"
-              value={editorQuery}
-              onChange={(value) => setEditorQuery(value)}
-              defaultValue="-- Write your SQL query here"
-            />
+  height="450px"
+  defaultLanguage="sql"
+  value={editorQuery}
+  onChange={(value) => setEditorQuery(value)}
+  theme={theme === "dark" ? "vs-dark" : "light"} // Add this line
+  defaultValue="-- Write your SQL query here"
+/>
             <Button className="mt-5 w-100" onClick={executeQuery} disabled={loading}>
               {loading ? <Spinner animation="border" size="sm" className="me-2" /> : 'Execute Query'}
             </Button>

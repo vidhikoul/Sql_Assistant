@@ -43,7 +43,7 @@ app.post('/api/sql/schema', async (req, res)=>{
   if(!userQuery){
     return  res.status(404).json({error : "No prompt found"});
   }
-  const result = await axios.post("http://20.197.51.242:8000/query", {
+  const result = await axios.post("http://74.225.201.145:8000/query", {
     Headers : {
       "Content-Type": "application/json"
     },
@@ -92,7 +92,7 @@ app.post('/api/sql/generate',async (req, res) => {
   }
   // const query = createStatements + "\nquery for:" + req.body.userQuery;
   const query = `Give me only sql query in trino dialect without any explaination for text : ${req.body.userQuery} Consider this schema : ${createStatements}`;
-  const generatedSQL = await axios.post("http://20.197.51.242:8000/query", {
+  const generatedSQL = await axios.post("http://74.225.201.145:8000/query", {
     Headers : {
       "Content-Type": "application/json"
     },
