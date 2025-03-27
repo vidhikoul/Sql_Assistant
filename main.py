@@ -9,18 +9,10 @@ app = FastAPI()
 
 embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
-<<<<<<< HEAD
-# Load the model
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = T5ForConditionalGeneration.from_pretrained('./models')
-model = model.to(device)
-model.eval()
-=======
 def extract_text_from_txt(txt_path):
     with open(txt_path, "r", encoding="utf-8") as file:
         text = file.read()
     return text
->>>>>>> codellama_backend
 
 def chunk_text(text, chunk_size=1000, chunk_overlap=100):
     splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
