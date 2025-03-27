@@ -1,70 +1,70 @@
-## AI SQL Assistant
+# Getting Started with Create React App
 
-## Overview
-AI SQL Assistant is an intelligent tool that helps users interact with databases efficiently. It suggests database schemas, generates SQL queries from natural language input, supports Trino and Spark SQL dialects, and incorporates user feedback to improve query generation. The project is built using React, Node.js, and MySQL, ensuring a seamless and user-friendly experience.
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Features
-✅ Schema Suggestion: Get recommendations for designing optimized database schemas.
-✅ SQL Query Generation: Convert natural language input into SQL queries.
-✅ Multi-Dialect Support: Works with Trino and Spark SQL dialects.
-✅ Interactive Query Editor: Provides auto-completion and syntax highlighting for SQL queries.
-✅ User Feedback Learning: Improves SQL generation accuracy over time based on user interactions.
+## Available Scripts
 
-## Tech Stack
-•	Frontend: React (Bootstrap for styling)
-•	Backend: Node.js (Express.js)
-•	Database: MySQL
-•	AI Model: Machine Learning-based query generation (CodeLlama:7B)
+In the project directory, you can run:
 
-## Installation & Setup
-Prerequisites
-Ensure you have the following installed before proceeding:
-•	Node.js (v16+)
-•	MySQL (Latest version)
-•	Trino/Spark SQL (if using respective dialects)
+### `npm start`
 
-## Steps to Run Locally
-1. Clone the Repository
-git clone https://github.com/vidhikoul/Sql_Assistant  
-cd Sql_Assistant  
-2. Set Up the Backend
-cd Backend  
-npm install  
-npm start  
-3. Set Up the Frontend
-cd ../Frontend  
-npm install  
-npm install bootstrap react-bootstrap  
-npm start  
-4. Connect to the Database
-Ensure your MySQL database is running and update the configuration in the backend.
-5. Run the Application
-Once both frontend and backend servers are running, open your browser and go to:
-http://localhost:3000
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-## Demo Videos
-## Connection with database
-https://github.com/user-attachments/assets/f1f75a70-cac1-4b3d-a552-abf7008306bd
+The page will reload when you make changes.\
+You may also see any lint errors in the console.
 
-## Query Execution
-https://github.com/user-attachments/assets/f15f85a4-bee0-477f-b83f-a91280b3c650
+### `npm test`
 
-## Schema recommendation
-https://github.com/user-attachments/assets/6869b4de-29d6-40af-a502-ec3bca1894b3
+Launches the test runner in the interactive watch mode.\
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-## Query Execution using Editor
-https://github.com/user-attachments/assets/31a4aa04-d500-44b1-b750-8c33a118046c
+### `npm run build`
 
+Builds the app for production to the `build` folder.\
+It correctly bundles React in production mode and optimizes the build for the best performance.
 
-For queries or support, reach out to:
-•	Email: koulvidhi2@gmail.com
-## Happy Coding! 🚀
+The build is minified and the filenames include the hashes.\
+Your app is ready to be deployed!
 
- 
+See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
+### `npm run eject`
 
+**Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
+If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
+Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
 
+You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
 
+## Learn More
 
+You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+
+To learn React, check out the [React documentation](https://reactjs.org/).
+
+### Code Splitting
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+
+### Analyzing the Bundle Size
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+
+### Making a Progressive Web App
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+
+### Advanced Configuration
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+
+### Deployment
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+
+### `npm run build` fails to minify
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
