@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 const { Groq } = require('groq-sdk');
 const groq = new Groq({ apiKey: "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" });
 // Import the database connection functions from db.js
-const { connectDB, executeQuery } = require('./config/db.js');
+const { db} = require('./config/db.js');
 
 dotenv.config();
 
@@ -15,6 +15,10 @@ app.use(express.json());
 
 // Database connection flag
 let isConnected = false;
+
+//auth routes
+const authrouter = require("./routes/authenticationRoutes");
+app.use('/api/auth', authrouter);
 
 // API to connect to MySQL database
 app.post('/api/sql/connect', async (req, res) => {
