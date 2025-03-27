@@ -1,89 +1,67 @@
 from fastapi import FastAPI
-from transformers import T5Tokenizer, T5ForConditionalGeneration
 from pydantic import BaseModel
-import torch
-import re
-import spacy
+from langchain_community.vectorstores import FAISS
+from langchain_huggingface import HuggingFaceEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from groq import Groq
 
 app = FastAPI()
 
-# Initialize the tokenizer from Hugging Face Transformers library
-tokenizer = T5Tokenizer.from_pretrained('t5-small')
+embeddings = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2")
 
+<<<<<<< HEAD
 # Load the model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = T5ForConditionalGeneration.from_pretrained('./models')
 model = model.to(device)
 model.eval()
+=======
+def extract_text_from_txt(txt_path):
+    with open(txt_path, "r", encoding="utf-8") as file:
+        text = file.read()
+    return text
+>>>>>>> codellama_backend
 
-#detecting if user is asking for update query
-def is_update_query(prompt: str) -> bool:
-    update_keywords = [
-        "update", "modify", "change", "set", "edit",
-        "update table", "change column", "modify record",
-        "update value", "update where", "set column"
-    ]
-    
-    prompt_lower = prompt.lower()
-    return any(keyword in prompt_lower for keyword in update_keywords)
+def chunk_text(text, chunk_size=1000, chunk_overlap=100):
+    splitter = RecursiveCharacterTextSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
+    return splitter.split_text(text)
 
-#detecting if user is asking for delete query
-def is_delete_query(prompt: str) -> bool:
-    delete_patterns = [
-        r"\bdelete\b", r"\bremove\b", r"\bdrop\b", r"\btruncate\b",
-        r"delete from", r"remove record", r"delete row",
-        r"delete data", r"delete entry", r"delete where",
-        r"remove from table", r"delete all records",
-        r"clear table", r"delete user", r"delete using sql",
-        r"how to delete", r"remove duplicate records"
-    ]
-    # Convert to lowercase
-    prompt_lower = prompt.lower()
-    # Check for any pattern in the prompt
-    return any(re.search(pattern, prompt_lower) for pattern in delete_patterns)
+def create_vector_db(txt_text, dbname):
+    chunks = chunk_text(txt_text)
+    vector_db = FAISS.from_texts(chunks, embeddings)
+    vector_db.save_local(dbname)
 
-def extract_update_details_nlp(prompt: str):
-    doc = nlp(prompt)
-    columns = []
-    values = []
-    
-    for token in doc:
-        if token.dep_ == "dobj" or token.dep_ == "attr":  # Direct Object (Potential Column)
-            columns.append(token.text)
-        if token.dep_ == "pobj" or token.dep_ == "nummod":  # Prepositional Object (Potential Value)
-            values.append(token.text)
-    
-    return [{"column": col, "new_value": val} for col, val in zip(columns, values)]
+async def generate_query(prompt, dialect):
+    if dialect == "trino":
+        vector_db = FAISS.load_local("vector_db_trino", embeddings, allow_dangerous_deserialization=True)
+    elif dialect == "spark":
+        vector_db = FAISS.load_local("vector_db_spark", embeddings, allow_dangerous_deserialization=True)
+    docs = vector_db.similarity_search(prompt, k=3)  # Retrieve the top 3 relevant chunks
+    query = f"""Use the following documentation to answer the query and give only SQL query without and explainantions:
 
-def generate_sql(input_prompt):
-    # Tokenize the input prompt
-    inputs = tokenizer(input_prompt, padding=True, truncation=True, return_tensors="pt").to(device)
+{docs}
 
-    # Forward pass
-    with torch.no_grad():
-        outputs = model.generate(**inputs, max_length=512)
+Question: {prompt}
+Answer:
+"""
+    client = Groq(api_key="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")
+    completion = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content" : query}],
+        temperature=1,
+        max_completion_tokens=1024,
+        top_p=1,
+        stream=True,
+        stop=None,
+    )
+    response_text = ""
+    for chunk in completion:
+        # Process each chunk from the stream
+        response_text += chunk.choices[0].delta.content or ""
+        print(chunk.choices[0].delta.content or "", end="")
 
-    # Decode the output IDs to a string (SQL query in this case)
-    generated_sql = tokenizer.decode(outputs[0], skip_special_tokens=True)
+    return response_text
 
-    return generated_sql
-
-def generate_query(prompt):
-    query = generate_sql(prompt)
-    if(is_delete_query(prompt)):
-        condition = query.split("FROM", 1)
-        return f"DELETE FROM {condition[1]}"
-    elif(is_update_query(prompt)):
-        clms = extract_update_details_nlp(prompt)
-        condition = query.split("FROM", 1)
-        condition = condition[1].split("WHERE", 1)
-        changes = "SET "
-        for c in clms:
-            changes += f"{c['column']} = {c['new_value']}"
-
-        return f"UPDATE {condition[0]} {changes} WHERE {condition[1]}"
-    else:
-        return query
 # Root endpoint
 @app.get("/")
 async def home():
@@ -91,9 +69,10 @@ async def home():
 
 class QueryInput(BaseModel):
     query: str
+    dialect: str
 
 @app.post("/query")
 async def query(query: QueryInput):
     """POST API to generate SQL from text."""
-    
-    return {"sql_query": generate_query(query.body.query)}
+    generated = await generate_query(query.query, query.dialect)
+    return {"sql_query": generated}
