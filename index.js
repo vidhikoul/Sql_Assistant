@@ -1,50 +1,63 @@
 const express = require('express');
 const cors = require('cors');
-const axios = require('axios');
 const dotenv = require('dotenv');
 const { Groq } = require('groq-sdk');
-const groq = new Groq({ apiKey: "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" });
-// Import the database connection functions from db.js
-const { db} = require('./config/db.js');
+const { connectDB, executeDB } = require('./config/db.js'); // Import DB functions
 
 dotenv.config();
 
+const groq = new Groq({ apiKey: "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" });
 const app = express();
+
 app.use(cors());
 app.use(express.json());
 
-// Database connection flag
 let isConnected = false;
 
-//auth routes
+// Auth routes
 const authrouter = require("./routes/authenticationRoutes");
 app.use('/api/auth', authrouter);
 
 // API to connect to MySQL database
 app.post('/api/sql/connect', async (req, res) => {
-  const { dbHost, dbUser, dbPassword, dbName, dbPort } = req.body;
+  const { host, user, password, database, port } = req.body;
 
-  if (!dbHost || !dbUser || !dbPassword || !dbName) {
+  if (!host || !user || !password || !database || !port) {
     return res.status(400).json({ error: 'All fields are required' });
   }
 
-  const result = await connectDB({
-    host: dbHost,
-    port: dbPort,
-    user: dbUser,
-    password: dbPassword,
-    database: dbName
-  });
-
-  if (result.success) {
-    isConnected = true;
+  try {
+    const result = await connectDB(host, user, password, port, database);
+    if (result.success) {
+      isConnected = true;
+    }
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ error: "Database connection failed", details: error });
   }
-
-  res.status(result.success ? 200 : 500).json(result);
 });
 
+// API to execute SQL query
+app.post('/api/sql/query', async (req, res) => {
+  if (!isConnected) {
+    return res.status(400).json({ success: false, message: 'Not connected to any database' });
+  }
+
+  try {
+    console.log("Executing query: ", req.body.query);
+    const result = await executeDB(req.body.query);
+    console.log("Query Result: ", result);
+
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('Error executing query:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// API to generate SQL schema
 app.get('/api/sql/schema', async (req, res) => {
-  const { userQuery } = req.query; // Change from req.body to req.query
+  const { userQuery } = req.query;
 
   if (!userQuery) {
     return res.status(400).json({ error: "No prompt found" });
@@ -73,26 +86,7 @@ app.get('/api/sql/schema', async (req, res) => {
   }
 });
 
-// API to execute SQL query
-app.post('/api/sql/query', async (req, res) => {
-  if (!isConnected) {
-    return res.status(400).json({ success: false, message: 'Not connected to any database' });
-  }
-
-  try {
-    console.log("Executing query: ", req.body.query);  // Log the query for debugging
-    const result = await executeQuery(req.body.query);  // Execute the query using executeQuery function
-    console.log("Query Result: ", result);  // Log the result for debugging
-
-    // Return the query result in a proper format
-    res.json({ success: true, data: result });  // Sending the result in the response
-  } catch (error) {
-    console.error('Error executing query:', error);
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// Route to generate SQL queries (example)
+// API to generate SQL query
 app.get('/api/sql/generate', async (req, res) => {
   const { userQuery } = req.query;
   if (!userQuery) {

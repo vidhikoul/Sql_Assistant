@@ -1,32 +1,49 @@
-// db.js
 const mysql = require('mysql2');
-dotenv = require('dotenv');
+const dotenv = require('dotenv');
 
 // Load environment variables
 dotenv.config();
 
-// Global variable to store DB connection
-const dbConnection = mysql.createConnection(
-  {
-    host : process.env.DB_HOST,
-    user : process.env.DB_USER,
-    password : process.env.DB_PASSWORD,
-    port : process.env.DB_PORT,
-    database : process.env.DB_NAME,
-    ssl : {
-      rejectUnauthorized : true,
-      ca : process.env.DB_CA_CERT
+let dbConnection;
+
+function connectDB(host, user, password, port, database) {
+  return new Promise((resolve, reject) => {
+    dbConnection = mysql.createConnection({
+      host: host,
+      user: user,
+      password: password,
+      port: port,
+      database: database,
+      ssl: {
+        rejectUnauthorized: false,
+      }
+    });
+
+    dbConnection.connect((err) => {
+      if (err) {
+        console.error('Database connection failed:', err.message);
+        return reject({ success: false, error: err.message });
+      }
+      console.log('Connected to the database.');
+      resolve({ success: true });
+    });
+  });
+}
+
+function executeDB(query, values = []) {
+  return new Promise((resolve, reject) => {
+    if (!dbConnection) {
+      return reject(new Error('Database not connected.'));
     }
-  }
-);
 
-dbConnection.connect((err)=>{
-  if(err){
-    console.log("Error in connecting to DB :" + err);
-    return;
-  }
-  console.log("Connected to DB");
-})
+    dbConnection.query(query, values, (err, results) => {
+      if (err) {
+        return reject(err);
+      }
+      resolve(results);
+    });
+  });
+}
 
-// Export the functions for use in other files
-module.exports = dbConnection;
+// Export functions
+module.exports = { connectDB, executeDB };
