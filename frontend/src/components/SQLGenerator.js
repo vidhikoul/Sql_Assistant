@@ -105,7 +105,7 @@ const SQLAssistant = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/mysql/connect', {
+      const response = await fetch('http://localhost:5001/api/sql/connect', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
